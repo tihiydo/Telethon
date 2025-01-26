@@ -328,6 +328,19 @@ class AuthMethods:
 
         if phone and not code and not password:
             return await self.send_code_request(phone)
+        elif code and password:
+            phone, phone_code_hash = \
+                self._parse_phone_and_hash(phone, phone_code_hash)
+
+            # May raise PhoneCodeEmptyError, PhoneCodeExpiredError,
+            # PhoneCodeHashEmptyError or PhoneCodeInvalidError.
+            request = functions.auth.SignInRequest(
+                phone, phone_code_hash, str(code)
+            )
+            pwd = await self(functions.account.GetPasswordRequest())
+            request = functions.auth.CheckPasswordRequest(
+                pwd_mod.compute_check(pwd, password)
+            )
         elif code:
             phone, phone_code_hash = \
                 self._parse_phone_and_hash(phone, phone_code_hash)
